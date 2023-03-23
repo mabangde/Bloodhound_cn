@@ -1,0 +1,683 @@
+{
+	"queries": [
+		{
+			"name": "列出域用户是本地管理员的计算机",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(m:Group)-[r:AdminTo]->(n:Computer) WHERE m.name STARTS WITH 'DOMAIN USERS' RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找域用户可以 RDP 到的工作站",
+			"queryList": [
+				{
+					"final": true,
+					"query": "match p=(g:Group)-[:CanRDP]->(c:Computer) where g.name STARTS WITH 'DOMAIN USERS' AND NOT c.operatingsystem CONTAINS 'Server' return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找域用户可以 RDP 到的服务器",
+			"queryList": [
+				{
+					"final": true,
+					"query": "match p=(g:Group)-[:CanRDP]->(c:Computer) where g.name STARTS WITH 'DOMAIN USERS' AND c.operatingsystem CONTAINS 'Server' return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "所有域用户到高价值目标的路径",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (g:Group) WHERE g.name STARTS WITH 'DOMAIN USERS'  MATCH (n {highvalue:true}),p=shortestPath((g)-[r*1..]->(n)) return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "域管账号会话机器",
+			"category": "Session 相关",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User)-[:MemberOf]->(g:Group) WHERE g.name STARTS WITH 'DOMAIN ADMINS' MATCH p = (c:Computer)-[:HasSession]->(n) return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "非 DC机器的域管会话",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c:Computer)-[:MemberOf]->(t:Group) WHERE NOT t.name STARTS WITH 'DOMAIN CONTROLLERS' WITH c as NonDC MATCH p=(NonDC)-[:HasSession]->(n:User)-[:MemberOf]-> (g:Group WHERE g.name STARTS WITH 'DOMAIN ADMINS') RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "可进行 Kerberoasting 攻击的高价值组成员账户",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User)-[r:MemberOf]->(g:Group) WHERE g.highvalue=true AND n.hasspn=true RETURN n, g, r",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "列出所有可进行Kerberoast攻击的账户",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User)WHERE n.hasspn=true RETURN n",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "会话最多的TOP 10用户",
+			"category":"Session 相关",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User),(m:Computer), (n)<-[r:HasSession]-(m) WHERE NOT n.name STARTS WITH 'ANONYMOUS LOGON' AND NOT n.name='' WITH n, count(r) as rel_count order by rel_count desc LIMIT 20 MATCH p=(m)-[r:HasSession]->(n) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找有最多管理员的TOP 10计算机",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User),(m:Computer), (n)-[r:AdminTo]->(m) WHERE NOT n.name STARTS WITH 'ANONYMOUS LOGON' AND NOT n.name='' WITH m, count(r) as rel_count order by rel_count desc LIMIT 20 MATCH p=(m)<-[r:AdminTo]-(n) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "最多用户会话机器TOP 10",
+			"category": "Session 相关",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User),(m:Computer), (n)<-[r:HasSession]-(m) WHERE NOT n.name STARTS WITH 'ANONYMOUS LOGON' AND NOT n.name='' WITH m, count(r) as rel_count order by rel_count desc LIMIT 20 MATCH p=(m)-[r:HasSession]->(n) RETURN n,r,m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "最多管理员会话机器TOP 10",
+			"category": "Session 相关",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User),(m:Computer), (n)<-[r:HasSession]-(m) WHERE NOT n.name STARTS WITH 'ANONYMOUS LOGON' AND NOT n.name='' WITH m, count(r) as rel_count order by rel_count desc LIMIT 20 MATCH p=(m)-[r:HasSession]->(n) RETURN n,r,m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "最多本地管理员TOP 10用户",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User),(m:Computer), (n)-[r:AdminTo]->(m) WHERE NOT n.name STARTS WITH 'ANONYMOUS LOGON' AND NOT n.name='' WITH n, count(r) as rel_count order by rel_count desc LIMIT 20 MATCH p=(m)<-[r:AdminTo]-(n) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "获取没有管理员的计算机的数量",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n)-[r:AdminTo]->(c:Computer) WITH COLLECT(c.name) as compsWithAdmins MATCH (c2:Computer) WHERE NOT c2.name in compsWithAdmins RETURN COUNT(c2)",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找非管理员的计算机的名称，按字母顺序排序",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n)-[r:AdminTo]->(c:Computer) WITH COLLECT(c.name) as compsWithAdmins MATCH (c2:Computer) WHERE NOT c2.name in compsWithAdmins RETURN c2.name ORDER BY c2.name ASC",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找所有非域控机器",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (dc:Computer)-[:MemberOf*1..]->(g:Group) WHERE g.name STARTS WITH('DOMAIN CONTROLLERS') WITH COLLECT(dc) as dcs MATCH (c:Computer) WHERE NOT c in dcs RETURN COUNT(c)",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "List all owned users",
+			"category": "已经获取权限的对象",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (m:User) WHERE m.owned=TRUE RETURN m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "List all owned computers",
+			"category": "已经获取权限的对象",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (m:Computer) WHERE m.owned=TRUE RETURN m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "List all owned groups",
+			"category": "已经获取权限的对象",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (m:Group) WHERE m.owned=TRUE RETURN m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "List all High Valued Targets",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (m) WHERE m.highvalue=TRUE RETURN m",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "List the groups of all owned users",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (m:User) WHERE m.owned=TRUE WITH m MATCH p=(m)-[:MemberOf*1..]->(n:Group) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "寻找从一个已经获取所有权限的对象到一个高价值目标的最短攻击路径",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=shortestPath((g {owned:true})-[*1..]->(n {highvalue:true})) WHERE  g<>n return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "用户对机器有特殊权限查询 WriteAccountRestrictions  (Top 100)",
+			"category": "ACL 审计",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select a domain...",
+					"query": "MATCH (d:Domain) RETURN d.name ORDER BY d.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[r1:WriteAccountRestrictions]->(c:Computer) WHERE u.domain = $result RETURN p limit 100",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "用户对机器有特殊权限查询 GenericAll  (Top 100)",
+			"category": "ACL 审计",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select a domain...",
+					"query": "MATCH (d:Domain) RETURN d.name ORDER BY d.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[r1:GenericAll]->(c:Computer) WHERE u.domain = $result RETURN p limit 100",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "用户对机器有特殊权限查询 Owns  (Top 100)",
+			"category": "ACL 审计",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select a domain...",
+					"query": "MATCH (d:Domain) RETURN d.name ORDER BY d.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[r1:Owns]->(c:Computer) WHERE u.domain = $result RETURN p limit 100",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "用户对机器有特殊权限查询 AllExtendedRights  (Top 100)",
+			"category": "ACL 审计",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select a domain...",
+					"query": "MATCH (d:Domain) RETURN d.name ORDER BY d.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[r1:AllExtendedRights]->(c:Computer) WHERE u.domain = $result RETURN p limit 100",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "查找从获得权限对象到无约束委派的系统最短攻击路径",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n) MATCH p=shortestPath((n)-[*1..]->(m:Computer {unconstraineddelegation: true})) WHERE NOT n=m AND n.owned = true RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "Find all Kerberoastable Users",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User)WHERE n.hasspn=true RETURN n",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找所有密码最后设置在5年之内的可进行Kerberoasting攻击的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User) WHERE u.hasspn=true AND u.pwdlastset < (datetime().epochseconds - (1825 * 86400)) AND NOT u.pwdlastset IN [-1.0, 0.0] RETURN u.name, u.pwdlastset order by u.pwdlastset",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找具有访问域管理员路径的可进行Kerberoasting攻击的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User {hasspn:true}) MATCH (g:Group) WHERE g.objectid ENDS WITH '-512' MATCH p = shortestPath( (u)-[*1..]->(g) ) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "Domain Users可远程桌面访问的机器",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "match p=(g:Group)-[:CanRDP]->(c:Computer) where g.objectid ENDS WITH '-513' return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找可以远程登录的组",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(m:Group)-[r:CanRDP]->(n:Computer) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找可以重置密码的组（警告：重度）",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(m:Group)-[r:ForceChangePassword]->(n:User) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找具有本地管理员权限的组（警告：重度）",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(m:Group)-[r:AdminTo]->(n:Computer) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找所有拥有本地管理员权限的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(m:User)-[r:AdminTo]->(n:Computer) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找所有活动的域管理员会话",
+			"category": "Session 相关",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User)-[:MemberOf]->(g:Group) WHERE g.objectid ENDS WITH '-512' MATCH p = (c:Computer)-[:HasSession]->(n) return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找无约束委派的所有计算机",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c:Computer {unconstraineddelegation:true}) return c",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找最近 90 天内登录的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User) WHERE u.lastlogon < (datetime().epochseconds - (90 * 86400)) and NOT u.lastlogon IN [-1.0, 0.0] RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找最近 90 天之前设置密码的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User) WHERE u.pwdlastset < (datetime().epochseconds - (90 * 86400)) and NOT u.pwdlastset IN [-1.0, 0.0] RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找约束委托",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[:AllowedToDelegate]->(c:Computer) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找允许不受约束委派但不是域控制器的计算机。",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c1:Computer)-[:MemberOf*1..]->(g:Group) WHERE g.objectid ENDS WITH '-516' WITH COLLECT(c1.name) AS domainControllers MATCH (c2:Computer {unconstraineddelegation:true}) WHERE NOT c2.name IN domainControllers RETURN c2",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "返回 SPN 包含字符串'MSSQL'的计算机",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c:Computer) WHERE ANY (x IN c.serviceprincipalnames WHERE toUpper(x) CONTAINS 'MSSQL') RETURN c",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "展示100条 GPOs ",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "Match (n:GPO) RETURN n limit 100",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "展示所有包含'admin' 关键字的组",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "Match (n:Group) WHERE n.name CONTAINS 'ADMIN' RETURN n",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找不要求kerberos 预身份认证用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User {dontreqpreauth: true}) RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找所有具有 SPN 的用户/查找所有密码上次设置 > 5 年的 Kerberoastable 用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User) WHERE u.hasspn=true AND u.pwdlastset < (datetime().epochseconds - (1825 * 86400)) AND NOT u.pwdlastset IN [-1.0, 0.0] RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "显示所有高价值目标的组",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(n:User)-[r:MemberOf*1..]->(m:Group {highvalue:true}) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找同时包含用户和计算机的组",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c:Computer)-[r:MemberOf*1..]->(groupsWithComps:Group) WITH groupsWithComps MATCH (u:User)-[r:MemberOf*1..]->(groupsWithComps) RETURN DISTINCT(groupsWithComps) as groupsWithCompsAndUsers",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找作为高价值组成员的 Kerberoastable 用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (u:User)-[r:MemberOf*1..]->(g:Group) WHERE g.highvalue=true AND u.hasspn=true RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找 Kerberoastable 用户及其管理员权限",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "OPTIONAL MATCH (u1:User) WHERE u1.hasspn=true OPTIONAL MATCH (u1)-[r:AdminTo]->(c:Computer) RETURN u",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找具有受限委派权限的计算机及其允许委派的相应目标",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (c:Computer) WHERE c.allowedtodelegate IS NOT NULL RETURN c",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找是否有任何域用户对 GPO 具有有趣的权限（警告：重度",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(u:User)-[r:AllExtendedRights|GenericAll|GenericWrite|Owns|WriteDacl|WriteOwner|GpLink*1..]->(g:GPO) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找非特权用户有权将成员添加到组中",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User {admincount:False}) MATCH p=allShortestPaths((n)-[r:AddMember*1..]->(m:Group)) RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找属于 VPN 组的所有用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "Match p=(u:User)-[:MemberOf]->(g:Group) WHERE toUPPER (g.name) CONTAINS 'VPN' return p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找从未登录且帐户仍处于活动状态的用户",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH (n:User) WHERE n.lastlogontimestamp=-1.0 AND n.enabled=TRUE RETURN n ",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "在一个域中找到一个可以对外来对象执行某些操作的对象",
+			"category": "",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=(n)-[r]->(m) WHERE NOT n.domain = m.domain RETURN p",
+					"allowCollapse": true
+				}
+			]
+		},
+		{
+			"name": "查找特定域下的用户所有会话",
+			"category": "Session 相关",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select source domain...",
+					"query": "MATCH (n:Domain) RETURN n.name ORDER BY n.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(m:Computer)-[r:HasSession]->(n:User {domain:$result}) RETURN p",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "查找能够对外部对象执行任何操作的域对象",
+			"requireNodeSelect": true,
+			"queryList": [
+				{
+					"final": false,
+					"title": "Select source domain...",
+					"query": "MATCH (n:Domain) RETURN n.name ORDER BY n.name"
+				},
+				{
+					"final": true,
+					"query": "MATCH p=(n {domain: $result})-[r]->(d) WHERE NOT d.domain=n.domain RETURN p",
+					"startNode": "{}",
+					"allowCollapse": false
+				}
+			]
+		},
+		{
+			"name": "查找任何已拥有用户权限在一台计算机上的所有边缘资产",
+			"queryList": [
+				{
+					"final": true,
+					"query": "MATCH p=shortestPath((m:User)-[r*]->(b:Computer)) WHERE m.owned RETURN p LIMIT 200"
+				}
+			]
+		}
+	]
+}
