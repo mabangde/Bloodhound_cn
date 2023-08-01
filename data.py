@@ -33,7 +33,16 @@ for edge in data['edges']:
 
 with open('output.txt', 'w', encoding='utf-8') as txtfile:
 
-    # Write each block of data
+    txtfile.write('Source and their counts:\n')
+    txtfile.write('-' * 60 + '\n')
+    # First part: Write each source and their counts
+    for source_id, target_labels in source_to_targets.items():
+        source_label = id_to_label[source_id]
+        txtfile.write(f'{source_label}: {len(target_labels)}\n')
+
+    txtfile.write('\n')
+
+    # Second part: Write each block of data
     for source_id, target_labels in source_to_targets.items():
         source_label = id_to_label[source_id]
         txtfile.write(f'Object: {source_label} => Members:\n')
@@ -42,6 +51,7 @@ with open('output.txt', 'w', encoding='utf-8') as txtfile:
         for target_label in target_labels:  # Loop through each target
             txtfile.write('\t' + target_label + '\n')
 
-        txtfile.write('\n')  # Add a blank line after each group
+        # Write the count of targets
+        txtfile.write(f'\nTotal members: {len(target_labels)}\n\n')
 
 
