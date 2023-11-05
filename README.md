@@ -6,3 +6,14 @@ bloodhound 汉化及规则
 
 
 其它规则推荐：https://github.com/CompassSecurity/BloodHoundQueries/blob/master/BloodHound_Custom_Queries/customqueries.json
+
+
+Bloodhound 安装说明：
+https://bloodhound.readthedocs.io/en/latest/installation/windows.html
+
+
+导入大的数据参考：
+https://blog.bitsadmin.com/dealing-with-large-bloodhound-datasets
+
+导入脚本：
+https://github.com/fox-it/bloodhound-import/blob/master/bloodhound_import/importer.py
