@@ -1,20 +1,25 @@
 import asyncio
-from dataclasses import dataclass
+import argparse
+import codecs
+import dataclasses
+import json
+import logging
+import os
+import platform
+from os.path import basename
+import warnings
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile
-from os.path import basename
-import codecs
 import ijson
-import logging
 import neo4j
 from neo4j import AsyncGraphDatabase, AsyncDriver
-import platform
-import json
-import os
-import argparse
-import asyncio
-import logging
 from neo4j.exceptions import ClientError
+
+# 禁用 ExperimentalWarning
+warnings.simplefilter("ignore", category=DeprecationWarning, append=True)
+
+# 禁用 RuntimeWarning
+warnings.simplefilter("ignore", category=RuntimeWarning, append=True)
 
 
 @dataclass
